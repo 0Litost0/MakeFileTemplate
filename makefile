@@ -16,7 +16,6 @@ $(warning OBJS is ${OBJS})
 
 
 FLAG=-g
-TARGET=$(notdir $(shell pwd))
 
 #找出当前目录下所有的头文件
 TEMP_INCLUDE_PATH=$(shell find ./* -type d)
@@ -27,17 +26,35 @@ $(warning INCLUDE_PATH is ${INCLUDE_PATH})
 #宏定义，用以格式化输出信息
 CFLAGS=-DDEBUG_TEST\(fmt,arg...\)=printf\(\"Litost_Cheng\ \"fmt,\#\#arg\)
 
+#链接过程中，所需要添加的一些依赖库，以及配置
+
+
+#MODE为1 视为生成可执行文件,否则都视为生成可执行文件
+$(warning MODE is ${MODE})
+ifeq (${MODE}, 1)
+LINKFLG=-shared -lpthread -std=c++0x
+OBJFLG=-fPIC
+TARGET=lib$(notdir $(shell pwd)).so
+$(warning Create Share Library [${TARGET}]!)
+else
+LINKFLG=-lpthread -std=c++0x
+TARGET=$(notdir $(shell pwd))
+$(warning Create Execute File [${TARGET}]!)
+endif
+
+#生成目标文件时，所需要添加的配置
+
 $(warning TARGET is ${TARGET})
 
 $(TARGET):$(OBJS)
-	$(CC) -o $@ $^ $(FLAG) $(CFLAGS) $(INCLUDE_PATH)
+	$(CC) -o $@ $^ $(FLAG) $(CFLAGS) $(INCLUDE_PATH) $(LINKFLG) 
 
 $(OBJS):$(SRCS)
 #找出同名的源文件
 #	echo $(basename $@)
 #	echo $(filter  $(basename $@)%, $^)
-	$(CC) $(CFLAGS) -o $@  -c $(filter  $(basename $@)%, $^) -g  $(INCLUDE_PATH)
+	$(CC) $(CFLAGS) -o $@  -c $(filter  $(basename $@)%, $^) -g  $(INCLUDE_PATH) $(OBJFLG)
 
 	
 clean:
-	rm -rf $(TARGET) $(OBJS)
+	rm -rf $(TARGET) $(OBJS) lib$(notdir $(shell pwd)).so
